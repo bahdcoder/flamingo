@@ -1,6 +1,15 @@
+import Qs from 'qs'
+import Faker from 'faker'
 import Supertest from 'supertest'
-import { plugin, event } from '@tensei/common'
+import { plugin, event, resource, text  } from '@tensei/common'
+
 import { setup, fakeUser, fakePost } from './setup'
+
+const buildingResource = resource('Building')
+.fields([
+    text('Title')
+])
+.publishable()
 
 test('Generates types only for resources not hidden from API', async () => {
     const { app } = await setup()
@@ -274,4 +283,33 @@ test('emits deleted event after resource is deleted', async () => {
             updated_at: new Date(response.body.data.updated_at)
         }
     ])
+})
+
+test('publishable resources hide drafts by default', async () => {
+    const { app, ctx: { orm: { em } } } = await setup([], true, [buildingResource])
+
+    const client = Supertest(app)
+
+    const publishedBuilding = em.create('Building', {
+        title: Faker.lorem.sentence(),
+        published_at: new Date()
+    })
+    const draftedBuilding = em.create('Building', {
+        title: Faker.lorem.sentence()
+    })
+
+    // Insert fake building
+    await em.persistAndFlush([
+        publishedBuilding,
+        draftedBuilding
+    ])
+
+    const response = await client.get('/api/buildings')
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.length).toBe(1)
+
+    response.body.data.forEach((row) => {
+        expect(row.published_at).toBeDefined()
+    })
 })

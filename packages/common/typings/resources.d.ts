@@ -28,6 +28,7 @@ declare module '@tensei/common/resources' {
         disableAutoFills: boolean
         slug: string
         label: string
+        publishable: boolean
         groupSlug: string
         valueField: string
         hideOnApi?: boolean
@@ -103,6 +104,8 @@ declare module '@tensei/common/resources' {
         hideOnApi(): this
         icon(icon: SupportedIcons): this
         isHiddenOnApi(): boolean
+        publishable(): this
+        notPublishable(): this
         hideOnInsertApi(): this
         hideOnUpdateApi(): this
         hideOnDeleteApi(): this

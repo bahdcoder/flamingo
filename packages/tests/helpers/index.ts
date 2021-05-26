@@ -16,6 +16,7 @@ import {
     PluginContract,
     DatabaseConfiguration
 } from '@tensei/core'
+import { ResourceContract } from '@tensei/common/resources'
 
 export const resources = () => [
     Tag,
@@ -86,9 +87,12 @@ export const getDatabaseCredentials = () => {
     return config
 }
 
-export const setup = async (plugins: PluginContract[] = [], reset = true) => {
+export const setup = async (plugins: PluginContract[] = [], reset = true, otherResources: ResourceContract[] = []) => {
     const instance = await tensei()
-        .resources(resources())
+        .resources([
+            ...resources(),
+            ...otherResources
+        ])
         .plugins(plugins)
         .db(getDatabaseCredentials())
         .start(() => {}, false)

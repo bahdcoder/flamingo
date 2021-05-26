@@ -3,6 +3,7 @@ import { Action } from '../actions/Action'
 import { timestamp } from '../fields/Timestamp'
 
 import {
+    filter,
     Permission,
     ResourceData,
     HookFunction,
@@ -165,6 +166,7 @@ export class Resource<ResourceType = {}> implements ResourceContract {
         extend: {},
         icon: 'category',
         description: '',
+        publishable: false,
         hideOnInsertApi: false,
         hideOnFetchApi: false,
         hideOnDeleteApi: false,
@@ -209,6 +211,51 @@ export class Resource<ResourceType = {}> implements ResourceContract {
         this.data.hideOnDeleteApi = true
         this.data.hideOnUpdateApi = true
         this.data.hideOnApi = true
+
+        return this
+    }
+
+    private publishedAtField = timestamp('Published At')
+        .nullable()
+        .sortable()
+        .hideOnInsertApi()
+        .hideOnUpdateApi()
+        .hideOnUpdate()
+        .hideOnIndex()
+        .hideOnCreate()
+
+    public publishable() {
+        this.data.publishable = true
+
+        this.data.fields = [
+            ...this.data.fields,
+            this.publishedAtField
+        ]
+
+        this.filters([
+            filter('Published')
+                .default()
+                .noArgs()
+                .query(() => ({
+                    [this.publishedAtField.databaseField]: {
+                        $ne: null
+                    }
+                })),
+            filter('Drafted')
+                .noArgs()
+                .query(() => ({
+                    [this.publishedAtField.databaseField]: null
+                })),
+        ])
+
+        return this
+    }
+
+    public notPublishable() {
+        this.data.publishable = false
+
+        this.data.fields = this.data.fields.filter(field => field.name !== this.publishedAtField.name)
+        this.data.filters = this.data.filters.filter(filter => ! ['Drafted', 'Published'].includes(filter.config.name))
 
         return this
     }
